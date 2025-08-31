@@ -215,8 +215,8 @@ build {
     inline = [
       "source ~/.zprofile",
       "df -h",
-      "export FREE_MB=$(df -m | awk '{print $4}' | head -n 2 | tail -n 1)",
-      "[[ $FREE_MB -gt ${var.disk_free_mb} ]] && echo \"OK - ${FREE_MB}MB free\" || (echo \"ERROR: Only ${FREE_MB}MB free, need ${var.disk_free_mb}MB\" && exit 1)"
+      "FREE_MB=$(df -m | awk '{print $4}' | head -n 2 | tail -n 1)",
+      "[[ $FREE_MB -gt ${var.disk_free_mb} ]] && echo \"OK - $${FREE_MB}MB free\" || (echo \"ERROR: Only $${FREE_MB}MB free, need ${var.disk_free_mb}MB\" && exit 1)"
     ]
   }
 
