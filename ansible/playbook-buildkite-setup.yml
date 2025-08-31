@@ -1,0 +1,6 @@
+---
+- hosts: default
+  roles:
+    - buildkite-agent
+  vars:
+    ansible_password: admin

@@ -1,0 +1,7 @@
+---
+# Override these with --extra-vars or in playbook
+buildkite_token: ""
+buildkite_tags: ""
+buildkite_priority: "0"
+buildkite_name: "%hostname-%n"
+buildkite_build_path: "{{ ansible_env.HOME }}/buildkite-builds"

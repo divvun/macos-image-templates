@@ -1,0 +1,36 @@
+---
+- name: Check if Buildkite agent is installed
+  command: which buildkite-agent
+  register: buildkite_installed
+  ignore_errors: yes
+
+- name: Install Buildkite agent if not present
+  homebrew:
+    name: buildkite/buildkite/buildkite-agent
+    state: present
+  when: buildkite_installed.rc != 0
+
+- name: Ensure .buildkite-agent directory exists
+  file:
+    path: "{{ ansible_env.HOME }}/.buildkite-agent"
+    state: directory
+    mode: '0755'
+
+- name: Configure Buildkite agent
+  template:
+    src: buildkite-agent.cfg.j2
+    dest: "{{ ansible_env.HOME }}/.buildkite-agent/buildkite-agent.cfg"
+    mode: '0600'
+  when: buildkite_token is defined and buildkite_token != ""
+
+- name: Start Buildkite agent service
+  command: brew services start buildkite/buildkite/buildkite-agent
+  when: buildkite_token is defined and buildkite_token != ""
+
+- name: Check Buildkite agent status
+  command: brew services list
+  register: services_status
+
+- name: Display Buildkite agent status
+  debug:
+    msg: "{{ services_status.stdout_lines | select('match', '.*buildkite.*') | list }}"
