@@ -150,6 +150,24 @@ build {
     ]
   }
 
+  # Install Deno
+  provisioner "shell" {
+    inline = [
+      "source ~/.zprofile",
+      "brew install deno",
+      "deno --version"
+    ]
+  }
+
+  # Install fastlane
+  provisioner "shell" {
+    inline = [
+      "source ~/.zprofile",
+      "brew install fastlane",
+      "fastlane --version"
+    ]
+  }
+
   # Enable Safari driver
   provisioner "shell" {
     inline = [
@@ -204,7 +222,7 @@ build {
   # Create persistent storage symlink
   provisioner "shell" {
     inline = [
-      "sudo ln -s '/Volumes/My Shared Files/persistent' /persistent"
+      "sudo ln -s '/Volumes/My Shared Files/persistent' /opt/d"
     ]
   }
 
