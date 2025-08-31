@@ -48,9 +48,9 @@ variable "disk_free_mb" {
 }
 
 source "tart-cli" "tart" {
-  vm_base_name = "${var.macos_version}-base-custom"
+  vm_base_name = "${var.macos_version}-base-divvun"
   // use tag or the first element of the xcode_version list
-  vm_name      = "${var.macos_version}-xcode-custom:${var.tag != "" ? var.tag : var.xcode_version[0]}"
+  vm_name      = "${var.macos_version}-xcode-divvun:${var.tag != "" ? var.tag : var.xcode_version[0]}"
   cpu_count    = 4
   memory_gb    = 8
   disk_size_gb = var.disk_size

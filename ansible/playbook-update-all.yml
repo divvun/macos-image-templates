@@ -1,0 +1,6 @@
+---
+- hosts: default
+  roles:
+    - system-updater-comprehensive
+  vars:
+    ansible_password: admin

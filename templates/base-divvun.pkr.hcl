@@ -13,7 +13,7 @@ variable "macos_version" {
 
 source "tart-cli" "tart" {
   vm_base_name = "ghcr.io/cirruslabs/macos-${var.macos_version}-vanilla:latest"
-  vm_name      = "${var.macos_version}-base-custom"
+  vm_name      = "${var.macos_version}-base-divvun"
   cpu_count    = 4
   memory_gb    = 8
   disk_size_gb = 50
