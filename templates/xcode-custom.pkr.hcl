@@ -48,7 +48,7 @@ variable "disk_free_mb" {
 }
 
 source "tart-cli" "tart" {
-  vm_base_name = "ghcr.io/cirruslabs/macos-${var.macos_version}-base-custom:latest"
+  vm_base_name = "${var.macos_version}-base-custom"
   // use tag or the first element of the xcode_version list
   vm_name      = "${var.macos_version}-xcode-custom:${var.tag != "" ? var.tag : var.xcode_version[0]}"
   cpu_count    = 4
