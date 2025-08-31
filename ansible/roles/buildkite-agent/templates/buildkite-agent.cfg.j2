@@ -1,0 +1,7 @@
+token="{{ buildkite_token }}"
+name="{{ buildkite_name }}"
+{% if buildkite_tags %}
+tags="{{ buildkite_tags }}"
+{% endif %}
+priority={{ buildkite_priority }}
+build-path="{{ buildkite_build_path }}"

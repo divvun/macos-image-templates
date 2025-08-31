@@ -1,0 +1,67 @@
+---
+# Update Homebrew
+- name: Update Homebrew
+  homebrew:
+    update_homebrew: yes
+
+- name: Upgrade all Homebrew packages
+  homebrew:
+    upgrade_all: yes
+
+- name: Cleanup old Homebrew versions
+  command: brew cleanup
+
+# Update Rust and Cargo
+- name: Update Rust toolchain
+  shell: |
+    source ~/.cargo/env
+    rustup update
+
+- name: Update Cargo packages (if cargo-update is installed)
+  shell: |
+    source ~/.cargo/env
+    cargo install-update -a || echo "cargo-update not installed, skipping"
+  ignore_errors: yes
+
+# Update Ruby gems
+- name: Update RubyGems system
+  shell: |
+    source ~/.zprofile
+    gem update --system
+
+- name: Update all installed gems
+  shell: |
+    source ~/.zprofile
+    gem update
+
+# Update Deno (via Homebrew)
+- name: Update Deno
+  homebrew:
+    name: deno
+    state: latest
+
+# Update pip packages (if Python is being used)
+- name: Update pip
+  shell: |
+    source ~/.zprofile
+    python3 -m pip install --upgrade pip || true
+  ignore_errors: yes
+
+# Run macOS software updates
+- name: Run macOS software updates
+  include_tasks: ../../system-updater/tasks/softwareupdate.yml
+
+# Final cleanup and status
+- name: Show updated package versions
+  shell: |
+    echo "=== Updated Versions ==="
+    brew --version
+    rustc --version 2>/dev/null || echo "Rust not available"
+    deno --version 2>/dev/null || echo "Deno not available"
+    ruby --version 2>/dev/null || echo "Ruby not available"
+    python3 --version 2>/dev/null || echo "Python3 not available"
+  register: version_output
+
+- name: Display version information
+  debug:
+    msg: "{{ version_output.stdout_lines }}"
