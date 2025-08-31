@@ -3,7 +3,7 @@ set -e
 
 # Configuration
 MACOS_VERSION="${1:-sonoma}"
-XCODE_VERSION="${2:-16.0}"
+XCODE_VERSION="${2:-16.4}"
 
 echo "Building Divvun macOS images..."
 echo "macOS Version: $MACOS_VERSION"
