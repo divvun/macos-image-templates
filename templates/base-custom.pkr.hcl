@@ -129,8 +129,16 @@ build {
   # Install Rust with iOS targets
   provisioner "shell" {
     inline = [
-      "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --targets x86_64-apple-darwin,aarch64-apple-ios,aarch64-apple-ios-sim",
-      "echo 'source ~/.cargo/env' >> ~/.zprofile"
+      # Install Rust with default target
+      "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y",
+      "echo 'source ~/.cargo/env' >> ~/.zprofile",
+      "source ~/.cargo/env",
+      # Add all required targets for iOS and macOS development
+      "rustup target add x86_64-apple-darwin",      # macOS Intel
+      "rustup target add aarch64-apple-darwin",      # macOS Apple Silicon (default, but explicit)
+      "rustup target add x86_64-apple-ios",          # iOS Intel simulator
+      "rustup target add aarch64-apple-ios",         # iOS device
+      "rustup target add aarch64-apple-ios-sim"      # iOS Apple Silicon simulator
     ]
   }
 
