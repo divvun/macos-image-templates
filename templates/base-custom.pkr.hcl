@@ -85,7 +85,7 @@ build {
       "source ~/.zprofile",
       "brew --version",
       "brew update",
-      "brew install wget unzip zip ca-certificates cmake gcc git-lfs jq yq gh",
+      "brew install wget unzip zip ca-certificates cmake git-lfs jq yq gh",
       "brew install curl || true", // doesn't work on Monterey
       "brew install --cask git-credential-manager",
       "git lfs install"
