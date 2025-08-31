@@ -48,7 +48,8 @@ build {
       "sudo chown root:wheel /Library/LaunchDaemons/limit.maxfiles.plist",
       "sudo chmod 0644 /Library/LaunchDaemons/limit.maxfiles.plist",
       "echo 'Disabling spotlight...'",
-      "sudo mdutil -a -i off",
+      "sudo mdutil -i off / || true",
+      "sudo mdutil -i off /System/Volumes/Data || true",
     ]
   }
 
