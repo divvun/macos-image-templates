@@ -22,6 +22,6 @@ packer build -var macos_version="$MACOS_VERSION" -var xcode_version="[\"$XCODE_V
 # Push Xcode image to registry
 echo "=== Pushing xcode-divvun image to ghcr.io/divvun ==="
 IMAGE_NAME="$MACOS_VERSION-xcode-divvun:$XCODE_VERSION"
-tart push "$IMAGE_NAME" "ghcr.io/divvun/macos-$IMAGE_NAME"
+tart push "$IMAGE_NAME" "ghcr.io/divvun/$IMAGE_NAME"
 
-echo "✅ Build complete! Image pushed to ghcr.io/divvun/macos-$IMAGE_NAME"
+echo "✅ Build complete! Image pushed to ghcr.io/divvun/$IMAGE_NAME"
