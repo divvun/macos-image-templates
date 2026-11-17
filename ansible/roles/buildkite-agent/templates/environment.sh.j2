@@ -1,0 +1,4 @@
+# Managed by Ansible; loaded by the Buildkite environment hook.
+{% for key, value in buildkite_environment | dictsort %}
+export {{ key }}={{ value | string | quote }}
+{% endfor %}

@@ -1,36 +1,93 @@
 ---
-- name: Check if Buildkite agent is installed
-  command: which buildkite-agent
-  register: buildkite_installed
-  ignore_errors: yes
-
-- name: Install Buildkite agent if not present
-  homebrew:
-    name: buildkite/buildkite/buildkite-agent
+- name: Install Buildkite agent
+  community.general.homebrew:
+    name: "{{ buildkite_formula }}"
     state: present
-  when: buildkite_installed.rc != 0
+  environment:
+    PATH: "{{ buildkite_brew_prefix }}/bin:{{ ansible_env.PATH }}"
 
-- name: Ensure .buildkite-agent directory exists
-  file:
-    path: "{{ ansible_env.HOME }}/.buildkite-agent"
+- name: Create Buildkite configuration and hook directories
+  ansible.builtin.file:
+    path: "{{ item }}"
     state: directory
     mode: '0755'
+  loop:
+    - "{{ buildkite_config_dir }}"
+    - "{{ buildkite_config_dir }}/hooks"
 
-- name: Configure Buildkite agent
-  template:
-    src: buildkite-agent.cfg.j2
-    dest: "{{ ansible_env.HOME }}/.buildkite-agent/buildkite-agent.cfg"
+- name: Create private builder configuration directory
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.config/divvun-builder"
+    state: directory
+    mode: '0700'
+
+- name: Inspect existing environment hook
+  ansible.builtin.stat:
+    path: "{{ buildkite_config_dir }}/hooks/environment"
+  register: buildkite_environment_stat
+
+- name: Read existing environment hook for preservation
+  ansible.builtin.slurp:
+    src: "{{ buildkite_config_dir }}/hooks/environment"
+  register: buildkite_environment_original
+  when: buildkite_environment_stat.stat.exists
+  no_log: true
+
+- name: Preserve an existing custom environment hook
+  ansible.builtin.copy:
+    content: "{{ buildkite_environment_original.content | b64decode }}"
+    dest: "{{ ansible_env.HOME }}/.config/divvun-builder/source-environment"
     mode: '0600'
-  when: buildkite_token is defined and buildkite_token != ""
+  when:
+    - buildkite_environment_stat.stat.exists
+    - "'# Managed by divvun-builder.' not in (buildkite_environment_original.content | b64decode)"
+  no_log: true
+  diff: false
 
-- name: Start Buildkite agent service
-  command: brew services start buildkite/buildkite/buildkite-agent
-  when: buildkite_token is defined and buildkite_token != ""
+- name: Install managed Buildkite environment hook
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../data/buildkite-environment.sh"
+    dest: "{{ buildkite_config_dir }}/hooks/environment"
+    mode: '0755'
 
-- name: Check Buildkite agent status
-  command: brew services list
-  register: services_status
+- name: Install signing keychain helper
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../scripts/builder-state-guest.py"
+    dest: "{{ ansible_env.HOME }}/.config/divvun-builder/keychain-helper.py"
+    mode: '0700'
 
-- name: Display Buildkite agent status
-  debug:
-    msg: "{{ services_status.stdout_lines | select('match', '.*buildkite.*') | list }}"
+- name: Validate environment variable names
+  ansible.builtin.assert:
+    that: item.key is match('^[A-Za-z_][A-Za-z0-9_]*$')
+    quiet: true
+  loop: "{{ buildkite_environment | dict2items }}"
+  no_log: true
+
+- name: Configure Buildkite environment variables
+  ansible.builtin.template:
+    src: environment.sh.j2
+    dest: "{{ ansible_env.HOME }}/.config/divvun-builder/environment"
+    mode: '0600'
+  when: buildkite_environment | length > 0
+  no_log: true
+  diff: false
+
+- name: Configure the file used by the Homebrew service
+  ansible.builtin.template:
+    src: buildkite-agent.cfg.j2
+    dest: "{{ buildkite_config_dir }}/buildkite-agent.cfg"
+    mode: '0600'
+  register: buildkite_agent_config
+  when: buildkite_token | length > 0
+  no_log: true
+  diff: false
+
+- name: Start Buildkite when configured and requested
+  community.general.homebrew_services:
+    name: "{{ buildkite_formula }}"
+    path: "{{ buildkite_brew_prefix }}/bin"
+    state: "{{ 'restarted' if buildkite_agent_config.changed | default(false) else 'present' }}"
+  when:
+    - buildkite_token | length > 0
+    - buildkite_start_agent | bool
+  no_log: true

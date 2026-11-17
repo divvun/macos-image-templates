@@ -1,7 +1,10 @@
-token="{{ buildkite_token }}"
-name="{{ buildkite_name }}"
+token={{ buildkite_token | to_json }}
+name={{ buildkite_name | to_json }}
 {% if buildkite_tags %}
-tags="{{ buildkite_tags }}"
+tags={{ buildkite_tags | to_json }}
 {% endif %}
 priority={{ buildkite_priority }}
-build-path="{{ buildkite_build_path }}"
+spawn={{ buildkite_spawn }}
+build-path={{ buildkite_build_path | to_json }}
+hooks-path={{ (buildkite_config_dir + '/hooks') | to_json }}
+plugins-path={{ buildkite_plugins_path | to_json }}

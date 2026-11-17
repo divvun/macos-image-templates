@@ -9,3 +9,11 @@ packer_cache/
 
 packer-builder-veertu-anka
 build
+# Builder credentials belong outside this repository.
+*.age
+*.agekey
+*.p12
+*.pfx
+builder-unlock*.json
+__pycache__/
+*.pyc

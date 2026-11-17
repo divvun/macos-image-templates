@@ -1,7 +1,14 @@
 ---
-# Override these with --extra-vars or in playbook
 buildkite_token: ""
-buildkite_tags: ""
+buildkite_formula: "buildkite/buildkite/buildkite-agent@3"
+buildkite_brew_prefix: "/opt/homebrew"
+buildkite_config_dir: "{{ buildkite_brew_prefix }}/etc/buildkite-agent"
+buildkite_tags: "queue=macos"
 buildkite_priority: "0"
-buildkite_name: "%hostname-%n"
-buildkite_build_path: "{{ ansible_env.HOME }}/buildkite-builds"
+buildkite_name: "%hostname-%spawn"
+buildkite_spawn: 2
+buildkite_build_path: "{{ buildkite_brew_prefix }}/var/buildkite-agent/builds"
+buildkite_plugins_path: "{{ buildkite_brew_prefix }}/var/buildkite-agent/plugins"
+buildkite_start_agent: true
+# Supply secrets through Ansible Vault or the encrypted state restore.
+buildkite_environment: {}
