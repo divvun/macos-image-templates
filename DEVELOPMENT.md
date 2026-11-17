@@ -85,8 +85,8 @@ source keychain paths to their passwords. It is sent over SSH stdin. An export
 fails if no valid identities can be found or a required key export fails.
 Non-exportable keys still require replacement or their original signing provider.
 
-Restore creates a dedicated keychain, configures access for signing tools, and
-checks that every expected identity can sign a binary before installing the agent
+Restore creates a dedicated keychain, lets `codesign`, `productsign` and
+`productbuild` use its keys, and checks that every expected identity can sign a binary before installing the agent
 configuration. The managed Buildkite hook unlocks that keychain for each job using
 a mode-0600 state file. Passwords are passed to `security` over stdin rather than
 process arguments. Plaintext bundles stay in memory on the controller; temporary
@@ -100,8 +100,8 @@ to a deployed VM after image publishing, so credentials stay out of shared image
 
 ### Buildkite environment configuration
 
-Both Packer and Ansible install `data/buildkite-environment.sh`. It provides
-Homebrew, Cargo and user-local tools on PATH, loads the original custom hook and
+Both Packer and Ansible install `data/buildkite-environment.sh`. It puts
+Homebrew, Cargo, user-local tools and `/usr/local/bin` on PATH, loads the original custom hook and
 `~/.config/divvun-builder/environment`, then unlocks the managed signing keychain.
 It suppresses shell tracing while loading these files.
 

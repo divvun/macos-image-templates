@@ -3,7 +3,7 @@
 # Buildkite sources this hook for every job. Keep sourced secrets out of xtrace.
 _divvun_restore_xtrace=false
 case "$-" in *x*) _divvun_restore_xtrace=true; set +x ;; esac
-export PATH="$HOME/.cargo/bin:$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
+export PATH="$HOME/.cargo/bin:$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:$PATH"
 if [[ -r "$HOME/.local/bin/env" ]]; then
   source "$HOME/.local/bin/env" || return 1
 fi

@@ -232,7 +232,8 @@ def restore_state(bundle, start_agent=False):
             p12 = Path(temp) / (str(index) + '.p12')
             p12.write_bytes(decode(identity['p12']))
             security_private(['import', str(p12), '-k', str(keychain), '-f', 'pkcs12',
-                              '-P', bundle['p12_password'], '-T', '/usr/bin/codesign', '-T', '/usr/bin/security'])
+                              '-P', bundle['p12_password'], '-T', '/usr/bin/codesign', '-T', '/usr/bin/security',
+                              '-T', '/usr/bin/productsign', '-T', '/usr/bin/productbuild'])
     security_private(['set-key-partition-list', '-S', 'apple-tool:,apple:,codesign:', '-s', '-k', state['password'], str(keychain)])
     current = search_list()
     if str(keychain) not in current:
@@ -280,7 +281,7 @@ MANAGED_ENVIRONMENT = '''#!/bin/bash
 # Buildkite sources this hook for every job. Keep sourced secrets out of xtrace.
 _divvun_restore_xtrace=false
 case "$-" in *x*) _divvun_restore_xtrace=true; set +x ;; esac
-export PATH="$HOME/.cargo/bin:$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
+export PATH="$HOME/.cargo/bin:$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:$PATH"
 if [[ -r "$HOME/.local/bin/env" ]]; then
   source "$HOME/.local/bin/env" || return 1
 fi
