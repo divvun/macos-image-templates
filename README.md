@@ -3,12 +3,15 @@
 Repository with Packer templates to build macOS [Tart](https://tart.run/) virtual machines to use with [Cirrus Runners](https://cirrus-runners.app/),
 [Cirrus CI](https://cirrus-ci.org/guide/macOS/) or [any other automation](https://tart.run/integrations/cirrus-cli/).
 
+For the custom Divvun images, `./build-divvun-images.sh` now builds macOS 27
+Golden Gate with Xcode 27.2. See [the Divvun build instructions](DEVELOPMENT.md#building-divvun-images).
+
 The following image variants are currently available:
 
-* `macos-{tahoe,sequoia,sonoma}-vanilla` — a vanilla macOS installation with helpful tweaks such as auto-login, but no additional software preinstalled
-* `macos-{tahoe,sequoia,sonoma}-base` — based on `macos-{tahoe,sequoia,sonoma}-vanilla` image, it comes with `brew` and [other useful software](https://github.com/cirruslabs/macos-image-templates/blob/main/templates/base.pkr.hcl) pre-installed, but without Xcode
-* `macos-{tahoe,sequoia,sonoma}-xcode:N` — based on `macos-{tahoe,sequoia,sonoma}-base` image and has `Xcode N` with [`Flutter`](https://flutter.dev/) pre-installed
-* `macos-runner:{tahoe,sequoia,sonoma}` — a variant of `xcode:N` with several versions of `Xcode` pre-installed and [`xcodes` tool](https://github.com/XcodesOrg/xcodes) to switch between them.
+* `macos-{golden-gate,tahoe,sequoia,sonoma}-vanilla` — a vanilla macOS installation with helpful tweaks such as auto-login, but no additional software preinstalled
+* `macos-{golden-gate,tahoe,sequoia,sonoma}-base` — based on `macos-{golden-gate,tahoe,sequoia,sonoma}-vanilla` image, it comes with `brew` and [other useful software](https://github.com/cirruslabs/macos-image-templates/blob/main/templates/base.pkr.hcl) pre-installed, but without Xcode
+* `macos-{golden-gate,tahoe,sequoia,sonoma}-xcode:N` — based on `macos-{golden-gate,tahoe,sequoia,sonoma}-base` image and has `Xcode N` with [`Flutter`](https://flutter.dev/) pre-installed
+* `macos-runner:{golden-gate,tahoe,sequoia,sonoma}` — a variant of `xcode:N` with several versions of `Xcode` pre-installed and [`xcodes` tool](https://github.com/XcodesOrg/xcodes) to switch between them.
 
 See a full list of VMs available [here](https://github.com/orgs/cirruslabs/packages?tab=packages&q=macos-).
 

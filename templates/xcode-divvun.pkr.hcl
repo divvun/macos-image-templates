@@ -20,6 +20,11 @@ variable "additional_ios_builds" {
   default = []
 }
 
+variable "additional_tvos_builds" {
+  type = list(string)
+  default = []
+}
+
 variable "xcode_components" {
   type    = list(string)
   default = []
@@ -39,7 +44,7 @@ variable "tag" {
 
 variable "disk_size" {
   type = number
-  default = 120
+  default = 140
 }
 
 variable "disk_free_mb" {
@@ -48,12 +53,14 @@ variable "disk_free_mb" {
 }
 
 source "tart-cli" "tart" {
-  vm_base_name = "${var.macos_version}-base-divvun"
+  // build-divvun-images.sh clones the base image to this name and sizes its
+  // disk before boot. The guest daemon then expands APFS on its own; a
+  // disk_size_gb here would have Packer resize it too, and both attempts fail.
+  recovery_partition = "keep"
   // use tag or the first element of the xcode_version list
   vm_name      = "${var.macos_version}-xcode-divvun:${var.tag != "" ? var.tag : var.xcode_version[0]}"
   cpu_count    = 4
   memory_gb    = 8
-  disk_size_gb = var.disk_size
   headless     = true
   ssh_password = "admin"
   ssh_username = "admin"
@@ -85,6 +92,19 @@ build {
   sources = ["source.tart-cli.tart"]
 
   provisioner "shell" {
+    // Allow 6 GB for boot/recovery partitions and metadata; Tart uses decimal GB.
+    inline = [
+      "minimum_kb=${floor((var.disk_size - 6) * 1000000000 / 1024)}",
+      "for ((attempt = 0; attempt < 60; attempt++)); do",
+      "  size_kb=$(df -k /System/Volumes/Data | awk 'NR == 2 {print $2}')",
+      "  [[ $size_kb -ge $minimum_kb ]] && break",
+      "  sleep 2",
+      "done",
+      "[[ $size_kb -ge $minimum_kb ]] || { echo 'APFS did not expand to ${var.disk_size} GB within 120 seconds.' >&2; exit 1; }",
+    ]
+  }
+
+  provisioner "shell" {
     inline = [
       "source ~/.zprofile",
       "brew --version",
@@ -97,7 +117,7 @@ build {
   provisioner "shell" {
     inline = [
       "source ~/.zprofile",
-      "brew install xcodesorg/made/xcodes",
+      "brew install xcodes",
       "xcodes version",
     ]
   }
@@ -168,6 +188,16 @@ build {
     )
   }
 
+  # Download additional tvOS build versions if specified
+  provisioner "shell" {
+    inline = concat(
+      ["source ~/.zprofile"],
+      [
+        for runtime in var.additional_tvos_builds : "xcodebuild -downloadPlatform tvOS -buildVersion ${runtime}"
+      ]
+    )
+  }
+
   # Download additional Xcode components if specified
   provisioner "shell" {
     inline = concat(
@@ -182,7 +212,7 @@ build {
   provisioner "shell" {
     inline = [
       "source ~/.zprofile",
-      "brew install xcbeautify swiftformat swiftlint swiftgen"
+      "brew install xcbeautify swiftformat swiftlint swiftgen xcodegen"
     ]
   }
 
@@ -231,8 +261,30 @@ build {
   # to avoid wasting CPU cycles after boot
   provisioner "shell" {
     inline = [
-      "echo 'Waiting for dyld cache update to complete...'",
-      "sleep 1800"
+      "source ~/.zprofile",
+      "xcrun simctl runtime dyld_shared_cache update --all || sleep 180",
+      "xcrun simctl list -v"
+    ]
+  }
+
+  # Compatibility: ensure /usr/local/bin is writable by the build user
+  provisioner "shell" {
+    inline = [
+      "sudo chown admin /usr/local/bin"
+    ]
+  }
+
+  # Install Apple WWDR certificates for code signing
+  provisioner "shell" {
+    inline = [
+      "source ~/.zprofile",
+      "curl -o AppleWWDRCAG3.cer https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer",
+      "curl -o DeveloperIDG2CA.cer https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer",
+      "curl -o add-certificate.swift https://raw.githubusercontent.com/actions/runner-images/fb3b6fd69957772c1596848e2daaec69eabca1bb/images/macos/provision/configuration/add-certificate.swift",
+      "swiftc -suppress-warnings add-certificate.swift",
+      "sudo ./add-certificate AppleWWDRCAG3.cer",
+      "sudo ./add-certificate DeveloperIDG2CA.cer",
+      "rm add-certificate* *.cer"
     ]
   }
 

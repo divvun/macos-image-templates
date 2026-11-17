@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Configuration
-MACOS_VERSION="${1:-sonoma}"
+MACOS_VERSION="${1:-golden-gate}"
 DRY_RUN="${2:-false}"
 
 echo "🧹 Cleaning up Divvun build artifacts..."
@@ -19,17 +19,14 @@ run_or_show() {
 
 # Clean up intermediate VMs
 echo "=== Cleaning up intermediate VMs ==="
-INTERMEDIATE_VMS=(
-    "${MACOS_VERSION}-base-divvun"
-    "${MACOS_VERSION}-xcode-divvun:16.0"
-    "${MACOS_VERSION}-xcode-divvun:16.1" 
-    "${MACOS_VERSION}-xcode-divvun:16.2"
-    "${MACOS_VERSION}-xcode-divvun:16.3"
-    "${MACOS_VERSION}-xcode-divvun:16.4"
-)
+INTERMEDIATE_VMS=("${MACOS_VERSION}-base-divvun")
+# Dynamically find xcode-divvun VMs for this macOS version
+while IFS= read -r vm; do
+    INTERMEDIATE_VMS+=("$vm")
+done < <(tart list --source local --quiet 2>/dev/null | grep "^${MACOS_VERSION}-xcode-divvun:" || true)
 
 for vm in "${INTERMEDIATE_VMS[@]}"; do
-    if tart list | grep -q "^$vm "; then
+    if tart list --source local --quiet | grep -Fxq -- "$vm"; then
         echo "🗑️  Deleting VM: $vm"
         run_or_show "tart delete '$vm'"
     else

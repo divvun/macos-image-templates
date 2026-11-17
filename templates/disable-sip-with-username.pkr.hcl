@@ -17,6 +17,7 @@ source "tart-cli" "tart" {
   cpu_count    = 4
   memory_gb    = 8
   disk_size_gb = 50
+  headless     = true
   communicator = "none"
   boot_command = [
     # Skip over "Macintosh" and select "Options"

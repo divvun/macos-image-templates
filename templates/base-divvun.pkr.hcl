@@ -7,16 +7,16 @@ packer {
   }
 }
 
-variable "macos_version" {
+variable "vm_name" {
   type = string
 }
 
 source "tart-cli" "tart" {
-  vm_base_name = "ghcr.io/cirruslabs/macos-${var.macos_version}-vanilla:latest"
-  vm_name      = "${var.macos_version}-base-divvun"
+  vm_name      = "${var.vm_name}"
   cpu_count    = 4
   memory_gb    = 8
   disk_size_gb = 50
+  headless     = true
   ssh_password = "admin"
   ssh_username = "admin"
   ssh_timeout  = "120s"
@@ -24,6 +24,15 @@ source "tart-cli" "tart" {
 
 build {
   sources = ["source.tart-cli.tart"]
+
+  # The SIP step types into Recovery unseen, and the TCC change at the end of
+  # this build needs it to have worked. Stop here if it did not.
+  provisioner "shell" {
+    inline = [
+      "csrutil status",
+      "csrutil status | grep -q disabled",
+    ]
+  }
 
   # Set dynamic hostname
   provisioner "shell" {
@@ -96,9 +105,22 @@ build {
   provisioner "shell" {
     inline = [
       "source ~/.zprofile",
-      "brew install cocoapods just bison flex python@3.11 boost pytorch",
+      "brew install just bison flex python@3.11 boost pytorch",
       "brew link bison --force",
       "brew link flex --force"
+    ]
+  }
+
+  # Tools the macOS Buildkite jobs in divvun-actions call
+  provisioner "shell" {
+    inline = [
+      "source ~/.zprofile",
+      "brew install node uv coreutils ninja autoconf imagemagick zstd",
+      "brew install --cask sentry-cli",
+      // pnpm 10 is what the Tahoe builder ran
+      "npm install -g pnpm@10",
+      // kbdgen's iOS build runs `pod install`
+      "brew install cocoapods",
     ]
   }
 
@@ -138,15 +160,42 @@ build {
       "rustup target add aarch64-apple-darwin",      # macOS Apple Silicon (default, but explicit)
       "rustup target add x86_64-apple-ios",          # iOS Intel simulator
       "rustup target add aarch64-apple-ios",         # iOS device
-      "rustup target add aarch64-apple-ios-sim"      # iOS Apple Silicon simulator
+      "rustup target add aarch64-apple-ios-sim",     # iOS Apple Silicon simulator
+      # outto builds with `cargo +nightly -Zbuild-std`
+      "rustup toolchain install nightly --profile minimal --component rust-src"
     ]
+  }
+
+  # rcodesign, kbdgen and outto from their releases
+  provisioner "shell" {
+    script = "scripts/install-divvun-tools.sh"
   }
 
   # Install Buildkite agent (without token configuration)
   provisioner "shell" {
     inline = [
       "source ~/.zprofile",
-      "brew install buildkite/buildkite/buildkite-agent"
+      "brew install buildkite/buildkite/buildkite-agent@3"
+    ]
+  }
+
+  # Public agent defaults and environment; credentials are restored per deployed VM.
+  provisioner "file" {
+    source      = "data/buildkite-agent.cfg"
+    destination = "~/buildkite-agent.cfg"
+  }
+
+  provisioner "file" {
+    source      = "data/buildkite-environment.sh"
+    destination = "~/buildkite-environment.sh"
+  }
+
+  provisioner "shell" {
+    inline = [
+      "mkdir -p /opt/homebrew/etc/buildkite-agent/hooks",
+      "install -m 0600 ~/buildkite-agent.cfg /opt/homebrew/etc/buildkite-agent/buildkite-agent.cfg",
+      "install -m 0755 ~/buildkite-environment.sh /opt/homebrew/etc/buildkite-agent/hooks/environment",
+      "rm ~/buildkite-agent.cfg ~/buildkite-environment.sh",
     ]
   }
 
@@ -205,7 +254,7 @@ build {
     inline = [
       # Install Tart Guest Agent
       "source ~/.zprofile",
-      "brew install cirruslabs/cli/tart-guest-agent",
+      "brew install openai/tools/tart-guest-agent",
 
       # Install daemon variant of the Tart Guest Agent
       "sudo mv ~/tart-guest-daemon.plist /Library/LaunchDaemons/org.cirruslabs.tart-guest-daemon.plist",
@@ -224,6 +273,11 @@ build {
     inline = [
       "sudo ln -s '/Volumes/My Shared Files/persistent' /opt/d"
     ]
+  }
+
+  # Update TCC.db and allow automation tools
+  provisioner "shell" {
+    script = "scripts/update-tcc-database.sh"
   }
 
   # Final upgrade of all packages
